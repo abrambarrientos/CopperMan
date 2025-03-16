@@ -1,0 +1,24 @@
+{
+  "name": "proyecto-de-programacion-master",
+  "version": "1.0.0",
+  "main": "Puntuacion.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Ramades/Copper-man.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Ramades/Copper-man/issues"
+  },
+  "homepage": "https://github.com/Ramades/Copper-man#readme",
+  "description": "",
+  "dependencies": {
+    "express": "^4.21.2"
+  }
+}
