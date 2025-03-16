@@ -2,6 +2,9 @@ let nombre;
 let puntaje;
 let personaje = 0;
 let direccionG = 4;
+let music;
+//variable para saber en que escena esta
+let escenaActual;
 
 function cambio(url) {
     const rutasValidas = ["/assets/Personajes/bomb.png", "/img/nivel2/bullet.png"];
@@ -45,9 +48,7 @@ function obtenerJugadores() {
     return JSON.parse(localStorage.getItem("jugadores")) || [];
 }
 
-
 // Funciones que controlan el menu inicial del juego
-
 class Menu extends Phaser.Scene {
     constructor() {
         super("menu-scene")
@@ -79,11 +80,11 @@ class Menu extends Phaser.Scene {
         );
 
 
-        if (!this.music) {
-            this.music = this.sound.add('backgroundMusic', { loop: true });
-            this.music.play();
-        } else if (!this.music.isPlaying) {
-            this.music.resume();
+        if (!music) {
+            music = this.sound.add('backgroundMusic', { loop: true });
+            music.play();
+        } else if (music.isPlaying) {
+            music.resume();
         }
 
 
@@ -98,12 +99,6 @@ class Menu extends Phaser.Scene {
             duration: 1500,
             delay: 200
         });
-
-        this.toggleMusic = this.toggleMusic.bind(this);
-
-        // Asegurar que no haya event listeners duplicados
-
-        document.getElementById('toggleMusicBtn')?.addEventListener('click', this.toggleMusic);
 
         // Botón Play
         let playButton = this.add.image(250, 900, 'playButton')
@@ -210,27 +205,38 @@ class Menu extends Phaser.Scene {
         });
 
 
-
-
-    }
-
-    shutdown() {
-        this.music.stop();
-        this.music.destroy();
-
-        // Remover event listeners para evitar duplicaciones
-        document.getElementById('toggleMusicBtn')?.removeEventListener('click', this.toggleMusic);
     }
 
     update() {
-
     }
-    toggleMusic() {
-        if (this.music.isPlaying) {
-            this.music.pause();
-        } else {
-            this.music.resume();
-        }
+
+}
+
+class Pausa extends Phaser.Scene {
+    constructor() {
+        super('Pausa');
+    }
+    preload() {
+        this.load.image('pauseImg', 'img/MenuUI/pause-icon.png');
+        this.load.image('bgPause', 'img/MenuPrincipal/FondoHero.jpg');
+    }
+    create() {
+
+
+        let pauseButton = this.add.image(this.cameras.main.centerX, this.cameras.main.centerY, 'pauseImg')
+            .setInteractive()
+            .setOrigin(0.5)
+            .setScrollFactor(0) // Fija la posición en la pantalla
+            .setDepth(10)
+            .setScale(0.5);
+
+        pauseButton.on('pointerdown', () => {
+            this.scene.stop(); // Cierra la escena de pausa
+            this.scene.resume(escenaActual); // Reanuda el juego
+        });
+    }
+    update() {
+
     }
 }
 
@@ -266,8 +272,8 @@ class ScoreScene extends Phaser.Scene {
 
         // Usamos Graphics para dibujar el fondo y borde de la tabla
         let graphics = this.add.graphics();
-        graphics.lineStyle(2, 0xffffff, 1);     
-        graphics.fillStyle(0x000000, 0.5);         
+        graphics.lineStyle(2, 0xffffff, 1);
+        graphics.fillStyle(0x000000, 0.5);
         graphics.fillRect(tableX, tableY, tableWidth, tableHeight);
         graphics.strokeRect(tableX, tableY, tableWidth, tableHeight);
 
@@ -391,6 +397,10 @@ class CreditsScene extends Phaser.Scene {
         // Cargar imágenes generales
         this.load.image('background1', 'img/MenuCreditos/FondoIntegrantes.png');  // imagen superior
         this.load.image('background2', 'img/MenuCreditos/Fondo1.webp');  // imagen inferior 
+
+        this.load.image('playButton', 'assets/Botones/PlayBtn.png'); // Botón jugar
+        this.load.image('playButtonHover', 'assets/Botones/Playcol_Button.png'); // Botón jugar
+
         this.load.image('backButton', 'assets/Botones/BackBtn.png');
         this.load.image('backButtonHover', 'assets/Botones/BackColBtn.png');
     }
@@ -425,8 +435,6 @@ class CreditsScene extends Phaser.Scene {
     }
 }
 
-
-
 // Funcion para escoger personaje y nombre del jugador
 class PlayerSetupScene extends Phaser.Scene {
     constructor() {
@@ -439,6 +447,8 @@ class PlayerSetupScene extends Phaser.Scene {
 
         this.load.image('playButton', 'assets/Botones/PlayBtn.png'); // Botón jugar
         this.load.image('playButtonHover', 'assets/Botones/Playcol_Button.png'); // Botón jugar
+        this.load.image('backButton', 'assets/Botones/BackBtn.png');
+        this.load.image('backButtonHover', 'assets/Botones/BackColBtn.png');
 
     }
 
@@ -450,11 +460,11 @@ class PlayerSetupScene extends Phaser.Scene {
         input.type = "text";
         input.placeholder = ". . .";
         input.style.position = "absolute";
-        input.style.top = "20%";
+        input.style.top = "23%";
         input.style.left = "38%";
         input.style.transform = "translate(-50%, -50%)";
-        input.style.padding = "0px 60px";
-        input.style.fontSize = "3.5rem";
+        input.style.padding = "0px 70px";
+        input.style.fontSize = "2rem";
         input.style.fontFamily = "Guerra";
         input.style.fontWeight = "Bold";
 
@@ -483,6 +493,13 @@ class PlayerSetupScene extends Phaser.Scene {
         button.style.transform = "translateX(-50%)";
         button.style.padding = "10px";
 
+        let backButton = document.createElement("button");
+        backButton.innerText = "Regresar al menú";
+        backButton.style.position = "absolute";
+        backButton.style.top = "calc(45% + 60px)"; // Posición vertical inferior al botón confirmar
+        backButton.style.left = "40%";
+        backButton.style.transform = "translateX(-50%)";
+        backButton.style.padding = "10px";
 
         //FUNCION PARA SELECCIONAR CUALQUIERA DE LOS 2 PERSONAJES
 
@@ -548,6 +565,7 @@ class PlayerSetupScene extends Phaser.Scene {
 
 
         document.getElementById("canvas").appendChild(button);
+        document.getElementById("canvas").appendChild(backButton);
 
         button.onclick = () => {
             let alias = input.value.trim();
@@ -561,16 +579,7 @@ class PlayerSetupScene extends Phaser.Scene {
                 });
                 return;
             }
-
-            /*       if (localStorage.getItem(alias)) {
-                      Swal.fire({
-                          icon: 'warning',
-                          title: 'Alias existente',
-                          text: 'Este alias ya ha sido registrado. Por favor, elige otro.'
-                      });
-                      return;
-                  }
-       */   nombre = alias;
+            nombre = alias;
             guardarJugador(alias, 0);
             mostrarMejoresPuntuaciones();
             console.log("Jugador:", alias);
@@ -583,6 +592,10 @@ class PlayerSetupScene extends Phaser.Scene {
             button.remove();
 
             this.scene.start('scene-game');
+        };
+
+        backButton.onclick = () => {
+            this.scene.start('menu-scene');
         };
     }
 }
@@ -608,6 +621,10 @@ class GameScene extends Phaser.Scene {
 
     preload() {
         // Elementos UI
+        this.load.image('Home', 'assets/Botones/HomeBtn.png');
+        this.load.image('Pausa', 'assets/Botones/PauseBtn.png');
+        this.load.image('Music', 'assets/Botones/AudioBtn.png');
+
         this.load.image('gameOver', 'img/MenuUI/gameOver.png');
         this.load.image('Winner', 'img/MenuUI/Winner.png');
         this.load.image('bomb1', 'assets/Personajes/Enemigo.png', { frameWidth: 32, frameHeight: 32 });
@@ -637,6 +654,22 @@ class GameScene extends Phaser.Scene {
     }
 
     create() {
+
+        this.player = null;
+        this.stars = null;
+        this.bombs = null;
+        this.platforms = null;
+        this.cursors = null;
+        this.score = 0;
+        this.gameOver = false;
+        this.scoreText = null;
+        this.spaceBar = null;
+        this.bullets = null;
+        this.lastArrowPressed = null;
+        this.delay = 2000;
+        this.lives = 3;
+        this.tresBotones();
+
         console.log(this.scene);  // Verifica que la referencia de la escena esté correcta
 
         //cambiar entre escenas provicional
@@ -646,14 +679,6 @@ class GameScene extends Phaser.Scene {
                 this.handleNumberPress(event.key);
             }
         });
-
-        this.toggleMusic = this.toggleMusic.bind(this);
-        this.togglePause = this.togglePause.bind(this);
-        this.exitGame = this.exitGame.bind(this);
-
-        document.getElementById('toggleMusicBtn').addEventListener('click', this.toggleMusic);
-        document.getElementById('pauseGameBtn').addEventListener('click', this.togglePause);
-        document.getElementById('exitGameBtn').addEventListener('click', this.exitGame);
 
         let playerName = localStorage.getItem("playerName") || "Jugador";
         let level = "Nivel 1";
@@ -889,36 +914,6 @@ class GameScene extends Phaser.Scene {
         });
     }
 
-    toggleMusic() {
-        if (this.music.isPlaying) {
-            this.music.pause();
-        } else {
-            this.music.resume();
-        }
-    }
-
-    togglePause() {
-        this.isPaused = !this.isPaused;
-        if (this.isPaused) {
-            this.scene.pause();
-        } else {
-            this.scene.resume();
-        }
-    }
-
-    exitGame() {
-
-        document.getElementById('pauseGameBtn').removeEventListener('click', this.togglePause);
-        document.getElementById('exitGameBtn').removeEventListener('click', this.exitGame);
-
-        let cajaRelleno = document.querySelector('.CajaRelleno');
-        if (cajaRelleno) {
-            cajaRelleno.innerHTML = '';
-        }
-        document.getElementById('lives-container').innerHTML = "";
-        this.scene.start('menu-scene');
-    }
-
     spawnSpecialItem = function () {
         // Crea el ítem un poco adelante del jugador para que sea visible
         let x = this.player.x + Phaser.Math.Between(200, 400);
@@ -936,13 +931,13 @@ class GameScene extends Phaser.Scene {
         // Detectar colisión/solapamiento con el jugador
         this.physics.add.overlap(this.player, specialItem, this.collectSpecialItem, null, this);
 
-        // --- CONTADOR SOBRE EL ÍTEM ---
-        let timeLeft = 5; // (5 segundos)
+        // Timepo de 5 segundos
+        let timeLeft = 5;
         let countdownText = this.add.text(
             specialItem.x,
             specialItem.y - 50,
             timeLeft,
-            { fontSize: '20px', fill: '#fff' }
+            { fontSize: '20px', fill: '#000' }
         ).setOrigin(0.5);
 
         // Guarda la referencia en el propio ítem para manipularlo luego
@@ -966,12 +961,12 @@ class GameScene extends Phaser.Scene {
                     console.log("El objeto especial desapareció por tiempo.");
                 }
             },
-            repeat: 4 // Repetimos 4 veces. (0 -> 5s totales)
+            repeat: 4
         });
     };
 
     collectSpecialItem = function (player, specialItem) {
-        // Desactivarlo inmediatamente (ya no colisiona)
+
         specialItem.disableBody(true, true);
 
         // Destruir el texto si existe
@@ -988,7 +983,58 @@ class GameScene extends Phaser.Scene {
         guardarJugador(playerName, this.score);
 
         console.log("¡Recogiste el objeto especial y ganaste 100 puntos!");
-    };
+    }
+
+    tresBotones() {
+        // Botón de pausa
+        let pauseButton = this.add.image(600, 30, 'Pausa')
+            .setInteractive()
+            .setOrigin(0.5)
+            .setScrollFactor(0) // Fija la posición en la pantalla
+            .setDepth(10)
+            .setScale(0.2);
+
+        pauseButton.on('pointerdown', () => {
+            escenaActual = "scene-game";
+            this.scene.launch('Pausa'); // Lanza la escena de pausa antes de pausar la escena actual
+            this.scene.pause();
+        });
+
+        // Botón de reinicio
+        let musicButton = this.add.image(650, 30, 'Music')
+            .setInteractive()
+            .setOrigin(0.5)
+            .setScrollFactor(0)
+            .setDepth(10)
+            .setScale(0.2);
+
+        musicButton.on('pointerdown', () => {
+
+            if (music.isPlaying) {
+                music.pause();
+            } else {
+                music.resume();
+            }
+
+        });
+
+        // Botón de salir
+        let exitButton = this.add.image(700, 30, 'Home')
+            .setInteractive()
+            .setOrigin(0.5)
+            .setScrollFactor(0)
+            .setDepth(10)
+            .setScale(0.2);
+
+        exitButton.on('pointerdown', () => {
+            document.getElementById("lives-container").innerHTML = '';
+            let cajaRelleno = document.querySelector('.CajaRelleno');
+            if (cajaRelleno) {
+                cajaRelleno.innerHTML = ''; // Limpiar el contenido HTML
+            }
+            this.scene.start('menu-scene'); // Cambia a la escena del menú principal
+        });
+    }
 
     collectStar(player, star) {
         star.disableBody(true, true);
@@ -1063,8 +1109,6 @@ class GameScene extends Phaser.Scene {
     isGameOver() {
         this.physics.pause();
         this.player.setTint(0xff0000);
-        document.getElementById('pauseGameBtn').removeEventListener('click', this.togglePause);
-        document.getElementById('exitGameBtn').removeEventListener('click', this.exitGame);
 
         // Detener el sonido de impacto si está reproduciéndose
         if (this.bombSound && this.bombSound.isPlaying) {
@@ -1147,8 +1191,6 @@ class GameScene extends Phaser.Scene {
     Congrulation() {
         this.physics.pause();
         this.player.setTint(0xff0000);
-        document.getElementById('pauseGameBtn').removeEventListener('click', this.togglePause);
-        document.getElementById('exitGameBtn').removeEventListener('click', this.exitGame);
 
         // Detener el sonido de impacto si está reproduciéndose
         if (this.bombSound && this.bombSound.isPlaying) {
@@ -1283,6 +1325,9 @@ class GameScene2 extends Phaser.Scene {
 
     preload() {
         // Elementos UI
+        this.load.image('Home', 'assets/Botones/HomeBtn.png');
+        this.load.image('Pausa', 'assets/Botones/PauseBtn.png');
+        this.load.image('Music', 'assets/Botones/AudioBtn.png');
         this.load.image('gameOver', 'img/MenuUI/gameOver.png');
         this.load.image('bomb12', 'assets/Personajes/Enemigo.png', { frameWidth: 32, frameHeight: 32 });
         this.load.image('bomb2', 'assets/Personajes/Enemigo2.png', { frameWidth: 32, frameHeight: 32 });
@@ -1307,6 +1352,22 @@ class GameScene2 extends Phaser.Scene {
     }
 
     create() {
+
+        this.player = null;
+        this.stars = null;
+        this.bombs = null;
+        this.platforms = null;
+        this.cursors = null;
+        this.score = 0;
+        this.gameOver = false;
+        this.scoreText = null;
+        this.spaceBar = null;
+        this.bullets = null;
+        this.lastArrowPressed = null;
+        this.delay = 2000;
+        this.lives = 3;
+        this.tresBotones();
+
         //cambiar entre escenas provicional
         this.input.keyboard.on("keydown", (event) => {
             if (event.key >= "0" && event.key <= "9") {
@@ -1315,16 +1376,8 @@ class GameScene2 extends Phaser.Scene {
             }
         });
 
-        this.toggleMusic = this.toggleMusic.bind(this);
-        this.togglePause = this.togglePause.bind(this);
-        this.exitGame = this.exitGame.bind(this);
-
-        document.getElementById('toggleMusicBtn').addEventListener('click', this.toggleMusic);
-        document.getElementById('pauseGameBtn').addEventListener('click', this.togglePause);
-        document.getElementById('exitGameBtn').addEventListener('click', this.exitGame);
-
         let playerName = localStorage.getItem("playerName") || "Jugador";
-        let level = "Nivel 1";
+        let level = "Nivel 2";
 
         let cajaRelleno = document.querySelector('.CajaRelleno');
 
@@ -1578,35 +1631,6 @@ class GameScene2 extends Phaser.Scene {
         });
     }
 
-    toggleMusic() {
-        if (this.music.isPlaying) {
-            this.music.pause();
-        } else {
-            this.music.resume();
-        }
-    }
-
-    togglePause() {
-        this.isPaused = !this.isPaused;
-        if (this.isPaused) {
-            this.scene.pause();
-        } else {
-            this.scene.resume();
-        }
-    }
-
-    exitGame() {
-
-        document.getElementById('pauseGameBtn').removeEventListener('click', this.togglePause);
-        document.getElementById('exitGameBtn').removeEventListener('click', this.exitGame);
-
-        let cajaRelleno = document.querySelector('.CajaRelleno');
-        if (cajaRelleno) {
-            cajaRelleno.innerHTML = '';
-        }
-        document.getElementById('lives-container').innerHTML = "";
-        this.scene.start('menu-scene');
-    }
 
     spawnSpecialItem = function () {
         // Crea el ítem un poco adelante del jugador para que sea visible
@@ -1657,7 +1681,57 @@ class GameScene2 extends Phaser.Scene {
             },
             repeat: 4 // Repetimos 4 veces. (0 -> 5s totales)
         });
-    };
+    }
+
+    tresBotones() {
+        // Botón de pausa
+        let pauseButton = this.add.image(600, 30, 'Pausa')
+            .setInteractive()
+            .setOrigin(0.5)
+            .setScrollFactor(0) // Fija la posición en la pantalla
+            .setDepth(10)
+            .setScale(0.2);
+
+        pauseButton.on('pointerdown', () => {
+            escenaActual = "scene-game2";
+            this.scene.launch('Pausa'); // Lanza la escena de pausa antes de pausar la escena actual
+            this.scene.pause();
+        });
+
+        // Botón de reinicio
+        let musicButton = this.add.image(650, 30, 'Music')
+            .setInteractive()
+            .setOrigin(0.5)
+            .setScrollFactor(0)
+            .setDepth(10)
+            .setScale(0.2);
+
+        musicButton.on('pointerdown', () => {
+
+            if (music.isPlaying) {
+                music.pause();
+            } else {
+                music.resume();
+            }
+
+        });
+
+        // Botón de salir
+        let exitButton = this.add.image(700, 30, 'Home')
+            .setInteractive()
+            .setOrigin(0.5)
+            .setScrollFactor(0)
+            .setDepth(10)
+            .setScale(0.2);
+
+        exitButton.on('pointerdown', () => {
+            document.getElementById("lives-container").innerHTML = '';
+            if (cajaRelleno) {
+                cajaRelleno.innerHTML = ''; // Limpiar el contenido HTML
+            }
+            this.scene.start('menu-scene'); // Cambia a la escena del menú principal
+        });
+    }
 
     collectSpecialItem = function (player, specialItem) {
         // Desactivarlo inmediatamente (ya no colisiona)
@@ -1748,8 +1822,6 @@ class GameScene2 extends Phaser.Scene {
     isGameOver() {
         this.physics.pause();
         this.player.setTint(0xff0000);
-        document.getElementById('pauseGameBtn').removeEventListener('click', this.togglePause);
-        document.getElementById('exitGameBtn').removeEventListener('click', this.exitGame);
 
         // Detener el sonido de impacto si está reproduciéndose
         if (this.bombSound && this.bombSound.isPlaying) {
@@ -1824,6 +1896,7 @@ class GameScene2 extends Phaser.Scene {
             this.bossFase = 1;
             this.isInvulnerable = false;
             this.bossSpeed = 100;
+            this.score = 0;
             this.scene.start('menu-scene');
         });
     }
@@ -1884,8 +1957,6 @@ class GameScene2 extends Phaser.Scene {
     Congrulation() {
         this.physics.pause();
         this.player.setTint(0xff0000);
-        document.getElementById('pauseGameBtn').removeEventListener('click', this.togglePause);
-        document.getElementById('exitGameBtn').removeEventListener('click', this.exitGame);
 
         // Detener el sonido de impacto si está reproduciéndose
         if (this.bombSound && this.bombSound.isPlaying) {
@@ -1998,6 +2069,9 @@ class Boss extends Phaser.Scene {
         this.isInvulnerable = false;
     }
     preload() {
+        this.load.image('Home', 'assets/Botones/HomeBtn.png');
+        this.load.image('Pausa', 'assets/Botones/PauseBtn.png');
+        this.load.image('Music', 'assets/Botones/AudioBtn.png');
         this.load.image('gameOver', 'img/MenuUI/gameOver.png');
         this.load.image('bomb1', 'assets/Personajes/Enemigo.png', { frameWidth: 32, frameHeight: 32 });
         this.load.image('rayo', 'assets/Personajes/rayo.png');
@@ -2045,6 +2119,8 @@ class Boss extends Phaser.Scene {
         this.isInvulnerable = false;
         this.bossHealth = 100;
         this.bossMaxHealth = 100;
+        this.bossInvulnerable = false;
+        this.tresBotones();
         //cambiar entre escenas provicional
         this.input.keyboard.on("keydown", (event) => {
             if (event.key >= "0" && event.key <= "9") {
@@ -2052,14 +2128,6 @@ class Boss extends Phaser.Scene {
                 this.handleNumberPress(event.key);
             }
         });
-        // Fondo
-        this.toggleMusic = this.toggleMusic.bind(this);
-        this.togglePause = this.togglePause.bind(this);
-        this.exitGame = this.exitGame.bind(this);
-
-        document.getElementById('toggleMusicBtn').addEventListener('click', this.toggleMusic);
-        document.getElementById('pauseGameBtn').addEventListener('click', this.togglePause);
-        document.getElementById('exitGameBtn').addEventListener('click', this.exitGame);
 
         this.add.image(400, 300, 'bossbg');
 
@@ -2262,35 +2330,6 @@ class Boss extends Phaser.Scene {
         });
 
     }
-    toggleMusic() {
-        if (this.music.isPlaying) {
-            this.music.pause();
-        } else {
-            this.music.resume();
-        }
-    }
-
-    togglePause() {
-        this.isPaused = !this.isPaused;
-        if (this.isPaused) {
-            this.scene.pause();
-        } else {
-            this.scene.resume();
-        }
-    }
-
-    exitGame() {
-
-        document.getElementById('pauseGameBtn').removeEventListener('click', this.togglePause);
-        document.getElementById('exitGameBtn').removeEventListener('click', this.exitGame);
-
-        let cajaRelleno = document.querySelector('.CajaRelleno');
-        if (cajaRelleno) {
-            cajaRelleno.innerHTML = '';
-        }
-        document.getElementById('lives-container').innerHTML = "";
-        this.scene.start('menu-scene');
-    }
     Shoot() {
         let bullet = this.bullets.create(this.player.x, this.player.y, `bomb${direccionG}`);
         bullet.setScale(0.5);
@@ -2405,6 +2444,57 @@ class Boss extends Phaser.Scene {
             this.activateInvulnerability(); // Activar invulnerabilidad después de recibir daño
         }
     }
+
+    tresBotones() {
+        // Botón de pausa
+        let pauseButton = this.add.image(600, 30, 'Pausa')
+            .setInteractive()
+            .setOrigin(0.5)
+            .setScrollFactor(0) // Fija la posición en la pantalla
+            .setDepth(10)
+            .setScale(0.2);
+
+        pauseButton.on('pointerdown', () => {
+            escenaActual = "scene-boss";
+
+            this.scene.launch('Pausa'); // Lanza la escena de pausa antes de pausar la escena actual
+            this.scene.pause();
+        });
+
+        // Botón de reinicio
+        let musicButton = this.add.image(650, 30, 'Music')
+            .setInteractive()
+            .setOrigin(0.5)
+            .setScrollFactor(0)
+            .setDepth(10)
+            .setScale(0.2);
+
+        musicButton.on('pointerdown', () => {
+
+            if (music.isPlaying) {
+                music.pause();
+            } else {
+                music.resume();
+            }
+
+        });
+
+        // Botón de salir
+        let exitButton = this.add.image(700, 30, 'Home')
+            .setInteractive()
+            .setOrigin(0.5)
+            .setScrollFactor(0)
+            .setDepth(10)
+            .setScale(0.2);
+
+        exitButton.on('pointerdown', () => {
+            document.getElementById("lives-container").innerHTML = '';
+            if (cajaRelleno) {
+                cajaRelleno.innerHTML = ''; // Limpiar el contenido HTML
+            }
+            this.scene.start('menu-scene'); // Cambia a la escena del menú principal
+        });
+    }
     hitBoss(player, boss) {
         if (this.isInvulnerable) return;
 
@@ -2503,7 +2593,7 @@ class Boss extends Phaser.Scene {
             .setScrollFactor(0)
             .setDepth(10);
 
-       
+
         const buttonScale = 0.5;
         // Offset vertical para situarlos debajo de la imagen Game Over
         const offsetY = 150;
@@ -2525,8 +2615,6 @@ class Boss extends Phaser.Scene {
             this.bossFase = 1;
             this.isInvulnerable = false;
             this.bossSpeed = 100;
-            document.getElementById('pauseGameBtn').removeEventListener('click', this.togglePause);
-            document.getElementById('exitGameBtn').removeEventListener('click', this.exitGame);
             this.scene.restart();
             this.scene.start('scene-boss');
 
@@ -2545,8 +2633,6 @@ class Boss extends Phaser.Scene {
             this.bossFase = 1;
             this.isInvulnerable = false;
             this.bossSpeed = 100;
-            document.getElementById('pauseGameBtn').removeEventListener('click', this.togglePause);
-            document.getElementById('exitGameBtn').removeEventListener('click', this.exitGame);
             this.scene.start('menu-scene');
         });
     }
@@ -2645,7 +2731,7 @@ const config = {
             debug: false
         }
     },
-    scene: [Menu, GameScene, GameScene2, PlayerSetupScene, ControlsScene, ScoreScene, CreditsScene, Boss, ganar],
+    scene: [Menu, GameScene, GameScene2, PlayerSetupScene, Pausa, ControlsScene, ScoreScene, CreditsScene, Boss, ganar],
 };
 
 window.onload = () => {

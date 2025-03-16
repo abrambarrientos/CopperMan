@@ -82,7 +82,7 @@ canvas {
   height: 100%;
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: center;
   background: var(--Color-Box);
   box-shadow: var(--Sombras-Box);
   background-size: cover;
@@ -102,41 +102,14 @@ canvas {
   display: flex;
   justify-content: center;
   align-items: center;
-  background: var(--Color-Box);
+  background: url(/img/MenuPrincipal/VideoHero2.gif);
   box-shadow: var(--Color-Box);
-  gap: 20px;
+
 }
 
 .Opciones img {
-  width: 60px;
-  cursor: pointer;
-  transition: .3s all;
-}
-
-.Opciones img:hover {
-  transform: scale(1.1);
-
-  #toggleMusicBtn,
-  #pauseGameBtn,
-  #exitGameBtn {
-    transition: all 0.3s ease;
-    /* Para que el cambio sea suave */
-  }
-
-}
-
-#toggleMusicBtn:hover {
-  content: url('assets/Botones/AudioColBtn.png');
-}
-
-
-#pauseGameBtn:hover {
-  content: url('assets/Botones/PauseColorBtn.png');
-}
-
-
-#exitGameBtn:hover {
-  content: url('assets/Botones/HomeColorBtn.png');
+  width: 170px;
+  
 }
 
 .CajaRelleno {
