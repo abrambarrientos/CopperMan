@@ -1217,6 +1217,7 @@ class GameScene2 extends Phaser.Scene {
         this.load.image('Reiniciar', 'assets/Botones/ReturnBtn.png');
         this.load.image('NextLvl', 'assets/Botones/NextBtn.png');
 
+        this.load.audio('DamageEnemy', 'Sounds/DamageEnemy.mp3');
         this.load.audio('deathSound', 'Sounds/Damage.mp3');
     }
 
@@ -1772,7 +1773,7 @@ class GameScene2 extends Phaser.Scene {
 
     hitEnemy = function (bullet, bomb) {
         console.log("Impacto");
-
+        this.sound.play('DamageEnemy');
         bullet.destroy(); // Eliminar la bala
 
         if (bomb.health === undefined) {
