@@ -590,12 +590,16 @@ class PlayerSetupScene extends Phaser.Scene {
 
             input.remove();
             button.remove();
-
+            backButton.remove();
             this.scene.start('scene-game');
         };
 
         backButton.onclick = () => {
+            input.remove();
+            button.remove();
+            backButton.remove();
             this.scene.start('menu-scene');
+            
         };
     }
 }
