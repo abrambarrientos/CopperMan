@@ -78,14 +78,14 @@ class Menu extends Phaser.Scene {
             this.sys.game.config.height / background.height
         );
 
-        
+
         if (!this.music) {
             this.music = this.sound.add('backgroundMusic', { loop: true });
             this.music.play();
         } else if (!this.music.isPlaying) {
             this.music.resume();
         }
-        
+
 
         let logo = this.add.image(400, -100, 'Logo');
         logo.setScale(0.7, 0.5);
@@ -102,9 +102,9 @@ class Menu extends Phaser.Scene {
         this.toggleMusic = this.toggleMusic.bind(this);
 
         // Asegurar que no haya event listeners duplicados
-        
+
         document.getElementById('toggleMusicBtn')?.addEventListener('click', this.toggleMusic);
-        
+
         // Botón Play
         let playButton = this.add.image(250, 900, 'playButton')
             .setDisplaySize(250, 60)
@@ -202,11 +202,11 @@ class Menu extends Phaser.Scene {
 
 
         // Asignar interactividad a los botones
-        playButton.on('pointerdown', () => {this.scene.start('PlayerSetupScene')});
+        playButton.on('pointerdown', () => { this.scene.start('PlayerSetupScene') });
         controlsButton.on('pointerdown', () => this.scene.start('ControlsScene'));
         creditsButton.on('pointerdown', () => this.scene.start('CreditsScene'));
         TableButton.on('pointerdown', () => {
-            mostrarMejoresPuntuaciones();
+            this.scene.start('ScoreScene');
         });
 
 
@@ -217,7 +217,7 @@ class Menu extends Phaser.Scene {
     shutdown() {
         this.music.stop();
         this.music.destroy();
-        
+
         // Remover event listeners para evitar duplicaciones
         document.getElementById('toggleMusicBtn')?.removeEventListener('click', this.toggleMusic);
     }
@@ -231,6 +231,121 @@ class Menu extends Phaser.Scene {
         } else {
             this.music.resume();
         }
+    }
+}
+
+class ScoreScene extends Phaser.Scene {
+    constructor() {
+        super("ScoreScene");
+    }
+
+    preload() {
+        this.load.image('scoreBackground', 'img/MenuPuntuaciones/FondoPuntuaciones.avif');
+        this.load.image('backButton', 'assets/Botones/BackBtn.png');
+        this.load.image('backButtonHover', 'assets/Botones/BackColBtn.png');
+    }
+
+    create() {
+        const { width, height } = this.cameras.main;
+        // Agrega el fondo de la escena
+        this.add.image(width / 2, height / 2, 'scoreBackground')
+            .setDisplaySize(width, height)
+            .setDepth(0);
+
+        // Recupera y ordena las puntuaciones
+        let scores = JSON.parse(localStorage.getItem("jugadores")) || [];
+        scores.sort((a, b) => b.punt - a.punt);
+
+        // Parámetros para el área de la tabla
+        const tableX = 50;                        // margen izquierdo
+        const tableY = 50;                        // margen superior
+        const tableWidth = width - 100;           // ancho de la tabla
+        const headerHeight = 40;                  // alto para el encabezado
+        const rowHeight = 30;                     // alto de cada fila
+        const tableHeight = headerHeight + (scores.length + 1) * rowHeight + 20; // +20 para padding inferior
+
+        // Usamos Graphics para dibujar el fondo y borde de la tabla
+        let graphics = this.add.graphics();
+        graphics.lineStyle(2, 0xffffff, 1);     
+        graphics.fillStyle(0x000000, 0.5);         
+        graphics.fillRect(tableX, tableY, tableWidth, tableHeight);
+        graphics.strokeRect(tableX, tableY, tableWidth, tableHeight);
+
+        // Estilo para el texto del encabezado
+        const headerStyle = {
+            font: "24px Guerra",
+            fill: "#ffffff",
+            stroke: "#000000",
+            strokeThickness: 3
+        };
+
+        // Título de la tabla (centrado en el área de la tabla)
+        this.add.text(tableX + tableWidth / 2, tableY + 10, "PUNTUACIONES", headerStyle)
+            .setOrigin(.5, 0);
+
+        // Posiciones de las columnas (ajústalas según necesites)
+        const colX = {
+            name: tableX + 20,
+            punt: tableX + tableWidth / 2,
+            date: tableX + tableWidth - 20
+        };
+
+        // Estilo para los encabezados de columna
+        const colHeaderStyle = {
+            font: "20px Guerra",
+            fill: "#ffffff",
+            stroke: "#000000",
+            strokeThickness: 2
+        };
+
+        const headerMarginBottom = 20; // margen inferior en píxeles
+
+
+        this.add.text(colX.name, tableY + headerHeight, "Nombre", colHeaderStyle)
+            .setOrigin(0, 0.5);
+        this.add.text(colX.punt, tableY + headerHeight, "Puntuación", colHeaderStyle)
+            .setOrigin(0.5, 0.5);
+        this.add.text(colX.date, tableY + headerHeight, "Fecha", colHeaderStyle)
+            .setOrigin(1, 0.5);
+
+        // Estilo para las filas de la tabla
+        const rowStyle = {
+            font: "18px Arial",
+            fill: "#ffffff",
+            stroke: "#000000",
+            strokeThickness: 1
+        };
+
+        scores.forEach((player, index) => {
+            const y = tableY + headerHeight + (index + 1) * rowHeight;
+            const fecha = player.date || 'N/A';
+            this.add.text(colX.name, y, player.nom, rowStyle).setOrigin(0, 0.5);
+            this.add.text(colX.punt, y, player.punt, rowStyle).setOrigin(0.5, 0.5);
+            this.add.text(colX.date, y, fecha, rowStyle).setOrigin(1, 0.5);
+
+            // Línea separadora opcional entre filas
+            graphics.lineStyle(1, 0xffffff, 0.7);
+            graphics.beginPath();
+            graphics.moveTo(tableX, y + rowHeight / 2);
+            graphics.lineTo(tableX + tableWidth, y + rowHeight / 2);
+            graphics.closePath();
+            graphics.strokePath();
+        });
+
+
+        // Crea el botón para volver al menú con efecto hover
+        let backButton = this.add.image(400, 550, 'backButton')
+            .setScale(0.2)
+            .setInteractive()
+            .on('pointerover', function () {
+                this.setTexture('backButtonHover');
+            })
+            .on('pointerout', function () {
+                this.setTexture('backButton');
+            })
+            .on('pointerdown', () => {
+                this.scene.start("menu-scene");
+            });
     }
 }
 
@@ -273,60 +388,30 @@ class CreditsScene extends Phaser.Scene {
     }
 
     preload() {
-        // Imágenes generales
-        this.load.image('background', 'img/Nivel1/Fondo1.jpg');
+        // Cargar imágenes generales
+        this.load.image('background1', 'img/MenuCreditos/FondoIntegrantes.png');  // imagen superior
+        this.load.image('background2', 'img/MenuCreditos/Fondo1.webp');  // imagen inferior 
         this.load.image('backButton', 'assets/Botones/BackBtn.png');
         this.load.image('backButtonHover', 'assets/Botones/BackColBtn.png');
-
-
-        this.load.image('image1', 'img/MenuCreditos/Abraham.jpg');
-        this.load.image('image2', 'img/MenuCreditos/David.jpg');
-        this.load.image('image3', 'img/MenuCreditos/Luis.jpg');
-        this.load.image('image4', 'img/MenuCreditos/Ramses.jpg');
     }
 
     create() {
+        const { width, height } = this.cameras.main;
 
-        let bg = this.add.image(400, 300, 'background')
-            .setDisplaySize(this.cameras.main.width, this.cameras.main.height)
+        // Imagen de fondo (depth: 0)
+        let fondo = this.add.image(width / 2, height / 2, 'background2')
+            .setDisplaySize(width, height)
             .setDepth(0);
 
-        // Definir las imágenes y los textos 
-        let creditImages = ['image1', 'image2', 'image3', 'image4'];
-        let creditTexts = [
-            "Comandante: Abraham Barrientos Esquivel 'El Lider'",
-            "General: David Menchaca Lora 'El Implacable'",
-            "Sargento: Luis Humberto Ramírez Gutiérrez 'El Rudo'",
-            "Soldado: Angel Ramses Martinez Herrera  'El Valiente' "
-        ];
+        // Imagen de capa superior (depth: 1)
+        let superior = this.add.image(width / 2, height / 2, 'background1')
+            .setDisplaySize(width, height)
+            .setDepth(1);
 
-        const startY = 100;       // Posición vertical inicial
-        const spacingY = 120;     // Separación vertical entre cada par
-        const imageX = 50;        // Posición horizontal de la imagen
-        const textX = 150;        // Posición horizontal del texto (al lado de la imagen)
-
-        for (let i = 0; i < creditImages.length; i++) {
-            // Agregamos la imagen (usamos setOrigin(0, 0.5) para alinear verticalmente al centro)
-            this.add.image(imageX, startY + i * spacingY, creditImages[i])
-                .setScale(0.1)
-                .setOrigin(0, 0.5)
-                .setDepth(1);
-
-            // Agregar texto a la derecha de la imagen
-            this.add.text(textX, startY + i * spacingY, creditTexts[i], {
-                font: "20px 'Courier New'",
-                fill: "#fff",
-                stroke: "#fff",
-                strokeThickness: 2
-            })
-                .setOrigin(0, 0.5)
-                .setDepth(1);
-        }
-
-        let backButton = this.add.image(this.cameras.main.centerX, this.cameras.main.height - 50, 'backButton')
-            .setScale(0.15)
+        // Botón de regresar (depth: 2, siempre visible encima)
+        let backButton = this.add.image(width / 2, height - 50, 'backButton')
+            .setScale(0.3)
             .setInteractive()
-            .setScale(.3)
             .on('pointerover', function () {
                 this.setTexture('backButtonHover');
             })
@@ -337,9 +422,9 @@ class CreditsScene extends Phaser.Scene {
                 this.scene.start("menu-scene");
             })
             .setDepth(2);
-
     }
 }
+
 
 
 // Funcion para escoger personaje y nombre del jugador
@@ -518,7 +603,7 @@ class GameScene extends Phaser.Scene {
         this.spaceBar = null;
         this.bullets = null;
         this.lives = 3;
-        
+
     }
 
     preload() {
@@ -822,7 +907,7 @@ class GameScene extends Phaser.Scene {
     }
 
     exitGame() {
-        
+
         document.getElementById('pauseGameBtn').removeEventListener('click', this.togglePause);
         document.getElementById('exitGameBtn').removeEventListener('click', this.exitGame);
 
@@ -2418,7 +2503,7 @@ class Boss extends Phaser.Scene {
             .setScrollFactor(0)
             .setDepth(10);
 
-        // Definir escala para los botones (por ejemplo, 0.5 para hacerlos más pequeños)
+       
         const buttonScale = 0.5;
         // Offset vertical para situarlos debajo de la imagen Game Over
         const offsetY = 150;
@@ -2550,6 +2635,9 @@ const config = {
     width: 800,
     height: 600,
     parent: 'canvas',
+    dom: {
+        createContainer: true
+    },
     physics: {
         default: 'arcade',
         arcade: {
@@ -2557,7 +2645,7 @@ const config = {
             debug: false
         }
     },
-    scene: [Menu, GameScene, GameScene2, PlayerSetupScene, ControlsScene, CreditsScene, Boss, ganar],
+    scene: [Menu, GameScene, GameScene2, PlayerSetupScene, ControlsScene, ScoreScene, CreditsScene, Boss, ganar],
 };
 
 window.onload = () => {

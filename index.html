@@ -15,7 +15,6 @@
 <body>
 
         <script>
-
             function iniciar() {
                 var imagenes = document.querySelectorAll('#cajaimagenes > img');
                 imagenes.forEach(img => {
@@ -45,44 +44,40 @@
             function soltado(e) {
                 e.preventDefault();
 
-                // Obtener la imagen anterior en el canvas
+                
                 const idAnterior = soltar.dataset.imgActual;
                 if (idAnterior) {
-                    // Devolver la imagen anterior a su posición original
+                    
                     document.getElementById(idAnterior).style.visibility = "visible";
                 }
 
-                // Obtener la nueva imagen
+                
                 var idNuevo = e.dataTransfer.getData('id');
                 var imagenNueva = document.getElementById(idNuevo);
 
-                // Guardar la nueva imagen en el dataset
+                
                 soltar.dataset.imgActual = idNuevo;
 
-                // Ocultar la imagen en la galería
+                
                 imagenNueva.style.visibility = "hidden";
 
-                // Dibujar la imagen en el canvas con tamaño más pequeño
+                
                 var img = new Image();
                 img.src = imagenNueva.src;
                 img.onload = function () {
-                    lienzo.clearRect(0, 0, soltar.width, soltar.height); // Limpiar canvas
-                    var nuevoAncho = img.width * .3; // Reducir al 30% del tamaño original
+                    lienzo.clearRect(0, 0, soltar.width, soltar.height); 
+                    var nuevoAncho = img.width * .3; 
                     var nuevoAlto = img.height * .3; 
-                    var posX = (soltar.width - nuevoAncho) / 2; // Centrar en X
-                    var posY = (soltar.height - nuevoAlto) / 2; // Centrar en Y
+                    var posX = (soltar.width - nuevoAncho) / 2; 
+                    var posY = (soltar.height - nuevoAlto) / 2; 
                     lienzo.drawImage(img, posX, posY, nuevoAncho, nuevoAlto);
 
-                    // Llamar a la función cambio() después de que la imagen sea colocada
                     cambio(img.src);
                 };
             }
             
             window.addEventListener('load', iniciar, false);
-
-
         </script>
-    </div>
 
 
     <div class="container">
@@ -117,7 +112,7 @@
 
             <div class="col-4">
                 <div class="Vidas box small-box w-100">
-                    <div id="lives-container"></div><!--Contenedor para las vidas-->
+                    <div id="lives-container"></div>
                     <div id="Puntaje"></div>
                 </div>
             </div>
@@ -125,11 +120,9 @@
             <div class="col-4">
                 <div class="Opciones box small-box w-100">
                     <img id="toggleMusicBtn" src="assets/Botones/AudioBtn.png" alt="Toggle Music">
-
-                    <!-- Botón para Pausar el Juego -->
+                   
                     <img id="pauseGameBtn" src="assets/Botones/PauseBtn.png" alt="Pause Game" >
 
-                    <!-- Botón para Salir al Menú -->
                     <img id="exitGameBtn" src="assets/Botones/HomeBtn.png" alt="Exit Game">
                 </div>
             </div>
