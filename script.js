@@ -2493,6 +2493,7 @@ class Boss extends Phaser.Scene {
 
         exitButton.on('pointerdown', () => {
             document.getElementById("lives-container").innerHTML = '';
+            let cajaRelleno = document.querySelector('.CajaRelleno');
             if (cajaRelleno) {
                 cajaRelleno.innerHTML = ''; // Limpiar el contenido HTML
             }
@@ -2554,8 +2555,6 @@ class Boss extends Phaser.Scene {
         let playerName = localStorage.getItem('playerName') || "Jugador";
         let puntaje = this.lives * 100;
         guardarJugador(playerName, puntaje);
-        document.getElementById('pauseGameBtn').removeEventListener('click', this.togglePause);
-        document.getElementById('exitGameBtn').removeEventListener('click', this.exitGame);
         this.scene.start('ganar');
     }
     spawnBossProjectile() {
